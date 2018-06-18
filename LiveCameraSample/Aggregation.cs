@@ -61,19 +61,23 @@ namespace LiveCameraSample
             List<string> attrs = new List<string>();
             if (attr.Gender != null) attrs.Add(attr.Gender);
             if (attr.Age > 0) attrs.Add(attr.Age.ToString());
-            if (attr.Emotion.Happiness > .5) attrs.Add("Student Very Happy");
             if (attr.HeadPose != null)
             {
                 // Simple rule to estimate whether person is facing camera. 
-                bool facing = Math.Abs(attr.HeadPose.Yaw) < 25;
+                bool facing = Math.Abs(attr.HeadPose.Yaw) < 10;
 
-                if (facing && attr.Emotion.Happiness > .5)
+                if (facing && attr.Emotion.Happiness > .8)
                 {
-                    attrs.Add(facing ? "facing camera" : "not facing camera");
+                    attrs.Add("Highly Attentive");
                 }
-
-             
-              
+                else if (facing && attr.Emotion.Neutral > .8)
+                {
+                    attrs.Add("Attentive");
+                }
+                else if (!facing)
+                {
+                    attrs.Add("Not Attentive");
+                }
             }
             return string.Join(", ", attrs);
         }

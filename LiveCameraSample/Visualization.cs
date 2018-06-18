@@ -125,14 +125,14 @@ namespace LiveCameraSample
                         text += Aggregation.SummarizeFaceAttributes(face.FaceAttributes);
                     }
 
-                    //if (knownPerson > 0)
-                    //{
-                    //    text += "Identified User";
-                    //}
-                    //if (knownPerson == 0)
-                    //{
-                    //    text += "Unidentified User";
-                    //}
+                    if (knownPerson > 0)
+                    {
+                        text += "Identified User ";
+                    }
+                    if (knownPerson == 0)
+                    {
+                        text += "Unidentified User ";
+                    }
 
                     if (emotionScores?[i] != null)
                     {

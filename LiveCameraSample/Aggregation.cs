@@ -66,6 +66,7 @@ namespace LiveCameraSample
                 // Simple rule to estimate whether person is facing camera. 
                 bool facing = Math.Abs(attr.HeadPose.Yaw) < 10;
 
+                // Sample checks to define attentiveness. 
                 if (facing && attr.Emotion.Happiness > .8)
                 {
                     attrs.Add("Highly Attentive");

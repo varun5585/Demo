@@ -278,31 +278,41 @@ namespace LiveCameraSample
             var jpg = frame.Image.ToMemoryStream(".jpg", s_jpegParams);
             //Getting Face ID for the person in the camera. 
             var faces = await _faceClient.DetectAsync(jpg, true, false, null);
+            //List of faces
+            List<string> names = new List<string>();
+            
             // Count the API call. 
-            Properties.Settings.Default.FaceAPICallCount++;
-            Guid[] faceid = new Guid[] { faces[0].FaceId };
-            //Identify person
-            var faceidentified = await _faceClient.IdentifyAsync("igniateam", faceid, (float)0.5, 1);
-            // Count the API call. 
-            Properties.Settings.Default.FaceAPICallCount++;
-            //Similar Candidates
-            var similarcandidates = faceidentified[0].Candidates.Length;
-            var candidatename = "Unidentified Person";
-
-            if (similarcandidates > 0)
+            foreach (FaceAPI.Contract.Face face in faces)
             {
-                //Candidate Name
-                var candidate = await _faceClient.GetPersonInPersonGroupAsync("igniateam", faceidentified[0].Candidates[0].PersonId);
-                candidatename = candidate.Name;
+                Properties.Settings.Default.FaceAPICallCount++;
+                Guid[] faceid = new Guid[] { face.FaceId };
+                //Identify person
+                var faceidentified = await _faceClient.IdentifyAsync("igniateam", faceid, (float)0.5, 1);
                 // Count the API call. 
                 Properties.Settings.Default.FaceAPICallCount++;
+                //Similar Candidates
+                var similarcandidates = faceidentified[0].Candidates.Length;
+                
+
+                if (similarcandidates > 0)
+                {
+                    //Candidate Name
+                    var candidate = await _faceClient.GetPersonInPersonGroupAsync("igniateam", faceidentified[0].Candidates[0].PersonId);
+                    names.Add(candidate.Name);
+                    // Count the API call. 
+                    Properties.Settings.Default.FaceAPICallCount++;
+                }
+                else
+                {
+                    names.Add("Unidentified Person");
+                }
             }
 
             // Output. 
             return new LiveCameraResult
             {
                 Faces = faces,
-                KnownPerson = candidatename
+                KnownPerson = names.ToArray()
             };
 
         }

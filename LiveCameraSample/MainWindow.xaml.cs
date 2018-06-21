@@ -34,7 +34,9 @@
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.IO;
 using System.Linq;
+using System.Text;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
@@ -295,11 +297,14 @@ namespace LiveCameraSample
                 // Count the API call. 
                 Properties.Settings.Default.FaceAPICallCount++;
             }
-          
+
             // Output. 
-          return new LiveCameraResult {
-              Faces = faces, KnownPerson = candidatename};
-         
+            return new LiveCameraResult
+            {
+                Faces = faces,
+                KnownPerson = candidatename
+            };
+
         }
 
         private BitmapSource VisualizeResult(VideoFrame frame)
@@ -512,9 +517,56 @@ namespace LiveCameraSample
             }
         }
 
-        private void CreatePerson_Click(object sender, RoutedEventArgs e)
+        private async void CreatePerson_Click(object sender, RoutedEventArgs e)
         {
-            
+            var personname = PersonName.Text;
+
+            // Create API clients. 
+            _faceClient = new FaceAPI.FaceServiceClient(Properties.Settings.Default.FaceAPIKey, Properties.Settings.Default.FaceAPIHost);
+
+            Microsoft.ProjectOxford.Face.Contract.Person[] facelist = await _faceClient.ListPersonsAsync("igniateam");
+
+            var personid = await _faceClient.CreatePersonAsync("igniateam", personname);
+            String[] imagefilenames = ImageURL.Text.Split(';');
+
+            foreach (var imagefileurl in imagefilenames)
+            {
+                if (imagefileurl != "")
+                {
+                    var imagestream = File.OpenRead(imagefileurl);
+                    var faceid = await _faceClient.AddPersonFaceAsync("igniateam", personid.PersonId, imagestream);
+                }
+            }
+
+
+            await _faceClient.TrainPersonGroupAsync("igniateam");
+            PersonName.Text = "";
+            ImageURL.Text = "";
+            MessageBox.Show("User Added");
+        }
+
+        private void SelectImage_Click(object sender, RoutedEventArgs e)
+        {
+
+            // Create OpenFileDialog 
+            Microsoft.Win32.OpenFileDialog dlg = new Microsoft.Win32.OpenFileDialog();
+            // Set filter for file extension and default file extension 
+            dlg.Multiselect = true;
+
+            // Display OpenFileDialog by calling ShowDialog method 
+            Nullable<bool> result = dlg.ShowDialog();
+
+            if (result == true)
+            {
+                StringBuilder filenames = new StringBuilder();
+                foreach (var file in dlg.FileNames)
+                {
+                    filenames.Append(file);
+                    filenames.Append(";");
+                }
+                ImageURL.Text = filenames.ToString();
+            }
+
         }
     }
 }

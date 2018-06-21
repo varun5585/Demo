@@ -101,7 +101,7 @@ namespace LiveCameraSample
             return DrawOverlay(baseImage, drawAction);
         }
 
-        public static BitmapSource DrawFaces(BitmapSource baseImage, FaceAPI.Face[] faces, EmotionScores[] emotionScores, string[] celebName, int knownPerson)
+        public static BitmapSource DrawFaces(BitmapSource baseImage, FaceAPI.Face[] faces, EmotionScores[] emotionScores, string[] celebName, string knownPerson)
         {
             if (faces == null)
             {
@@ -127,14 +127,9 @@ namespace LiveCameraSample
 
                     if (face.FaceAttributes == null && emotionScores?[i] == null && celebName?[i] == null)
                     {
-                        if (knownPerson > 0)
-                        {
-                            text += "Identified User ";
-                        }
-                        if (knownPerson == 0)
-                        {
-                            text += "Unidentified User ";
-                        }
+                  
+                            text += knownPerson;
+                       
                     }
 
                     if (emotionScores?[i] != null)

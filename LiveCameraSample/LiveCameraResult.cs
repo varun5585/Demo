@@ -39,7 +39,7 @@ namespace LiveCameraSample
         public Microsoft.ProjectOxford.Face.Contract.Face[] Faces { get; set; } = null;
         public Microsoft.ProjectOxford.Common.Contract.EmotionScores[] EmotionScores { get; set; } = null;
         public string[] CelebrityNames { get; set; } = null;
-        public int KnownPerson { get; set; } = 0;
+        public string KnownPerson { get; set; }
         public Microsoft.ProjectOxford.Vision.Contract.Tag[] Tags { get; set; } = null;
     }
 }

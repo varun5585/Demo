@@ -5,8 +5,8 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:LiveCameraSample"
         mc:Ignorable="d"
-        Title="LiveCameraSample" Height="586.228" Width="725">
-    <Grid Margin="0,0,0,2">
+        Title="LiveCameraSample" Height="640.7" Width="725">
+    <Grid Margin="0,0,0,8">
         <Grid.RowDefinitions>
             <RowDefinition Height="35" />
             <RowDefinition Height="*" />
@@ -29,7 +29,7 @@
             </Grid.ColumnDefinitions>
             <Image x:Name="LeftImage" Grid.Column="0" Margin="5" />
             <Image x:Name="RightImage" Grid.Column="1" Margin="5" Panel.ZIndex="1" Grid.ColumnSpan="3" />
-            <StackPanel Visibility="{Binding Source={StaticResource Settings}, Path=Default.SettingsPanelVisibility, Mode=TwoWay}" Grid.Column="1" Panel.ZIndex="2" Name="SettingsPanel" Background="LightGray" VerticalAlignment="Top" Margin="5,5,5,-28" Height="500" Grid.ColumnSpan="3">
+            <StackPanel Visibility="{Binding Source={StaticResource Settings}, Path=Default.SettingsPanelVisibility, Mode=TwoWay}" Grid.Column="1" Panel.ZIndex="2" Name="SettingsPanel" Background="LightGray" VerticalAlignment="Top" Margin="5,5,5,-58" Height="530" Grid.ColumnSpan="3">
                 <TextBlock Margin="5" Grid.Row="0" FontWeight="Bold" Text="Settings"/>
                 <Grid>
                     <Grid.ColumnDefinitions>
@@ -66,6 +66,8 @@
                 </TextBlock>
                 <CheckBox Margin="5" IsChecked="{Binding Source={StaticResource Settings}, Path=Default.AutoStopEnabled}" ContentStringFormat="Automatically stop after {0}" Content="{Binding Source={StaticResource Settings}, Path=Default.AutoStopTime}" />
                 <Button Margin="5" Content="Save" Click="SaveSettingsButton_Click" />
+                <Separator/>
+                <TextBlock Margin="5" Grid.Row="0" FontWeight="Bold" Text="Create User Settings"/>
                 <Grid>
                     <Grid.ColumnDefinitions>
                         <ColumnDefinition Width="100" />
@@ -83,17 +85,44 @@
                         <RowDefinition Height="Auto" />
                     </Grid.RowDefinitions>
 
-                <TextBlock Margin="5" Grid.Row="1" Grid.Column="0" Text="Person Name" />
-                    
-                <TextBox Margin="5" Grid.Row="1" Grid.Column="1" Name="PersonName"/>
-                <TextBox Margin="5" Grid.Row="2" Grid.Column="0" Name="ImageURL" IsReadOnly="True"/>
-                <Button Grid.Row="2" Grid.Column="1" Content="Select Image" Click="SelectImage_Click" />
-                    
+                    <TextBlock Margin="5" Grid.Row="1" Grid.Column="0" Text="User Name" />
+
+                    <TextBox Margin="95,5,5,5" Grid.Row="1" Name="PersonName" Grid.ColumnSpan="2" AutomationProperties.HelpText="Image URL"/>
+                    <TextBlock Margin="5" Grid.Row="2" Grid.Column="0" Text="Image Path" />
+                    <TextBox Margin="95,5,51,5" Grid.Row="2" Grid.Column="0" Name="ImageURL" IsReadOnly="True" Grid.ColumnSpan="2"/>
+                    <Button Grid.Row="2" Grid.Column="2" Content="Select" Click="SelectImage_Click" Margin="204,0,5,0" Height="28" VerticalAlignment="Top" />
 
                 </Grid>
-                <Button Margin="5" Content="Create Person" Click="CreatePerson_Click" />
+                <Button Margin="5" Content="Create User" Name="CreateUser" Click="CreatePerson_Click" />
+                <Separator/>
+                <TextBlock Margin="5,5,224,5" Grid.Row="0" FontWeight="Bold" Text="Delete User Settings" Height="19"/>
+                <Button Content="Fetch Users" Name="fetchUser" Click="FetchUsers_Click"/>
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="100" />
+                        <ColumnDefinition Width="49*" />
+                        <ColumnDefinition Width="7*"/>
+                        <ColumnDefinition Width="194*"/>
+                    </Grid.ColumnDefinitions>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="Auto" />
+                    </Grid.RowDefinitions>
+                    <ComboBox Grid.ColumnSpan="4" Grid.Row="2" Grid.Column="0" HorizontalAlignment="Left" VerticalAlignment="Top" Width="267" Name="comboUsers"/>
+                    <Button Grid.Row="2" Grid.Column="3" Content="Delete User" Margin="115.529,0,0,0" Height="22" VerticalAlignment="Bottom" Click="DeleteUser_Click"/>
+
+                </Grid>
+
+
             </StackPanel>
         </Grid>
-        <TextBlock Name="MessageArea" Margin="5" Grid.Row="2" VerticalAlignment="Center" />
+        <TextBlock Name="MessageArea" Margin="5,10,5,0" Grid.Row="2" VerticalAlignment="Center" Height="25" />
     </Grid>
 </Window>

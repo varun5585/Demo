@@ -239,10 +239,10 @@ namespace LiveCameraSample
         {
             // Encode image. 
             var jpg = frame.Image.ToMemoryStream(".jpg", s_jpegParams);
-            // Submit image to API. 
-            var analysis = await _visionClient.GetTagsAsync(jpg);
             // Count the API call. 
             Properties.Settings.Default.VisionAPICallCount++;
+            // Submit image to API. 
+            var analysis = await _visionClient.GetTagsAsync(jpg);
             // Output. 
             return new LiveCameraResult { Tags = analysis.Tags };
         }
@@ -256,10 +256,10 @@ namespace LiveCameraSample
         {
             // Encode image. 
             var jpg = frame.Image.ToMemoryStream(".jpg", s_jpegParams);
-            // Submit image to API. 
-            var result = await _visionClient.AnalyzeImageInDomainAsync(jpg, "celebrities");
             // Count the API call. 
             Properties.Settings.Default.VisionAPICallCount++;
+            // Submit image to API. 
+            var result = await _visionClient.AnalyzeImageInDomainAsync(jpg, "celebrities");
             // Output. 
             var celebs = JsonConvert.DeserializeObject<CelebritiesResult>(result.Result.ToString()).Celebrities;
             return new LiveCameraResult
@@ -277,30 +277,39 @@ namespace LiveCameraSample
             // Encode image. 
             var jpg = frame.Image.ToMemoryStream(".jpg", s_jpegParams);
             //Getting Face ID for the person in the camera. 
+            Properties.Settings.Default.FaceAPICallCount++;
             var faces = await _faceClient.DetectAsync(jpg, true, false, null);
             //List of faces
             List<string> names = new List<string>();
-            
+
             // Count the API call. 
             foreach (FaceAPI.Contract.Face face in faces)
             {
                 Properties.Settings.Default.FaceAPICallCount++;
                 Guid[] faceid = new Guid[] { face.FaceId };
-                //Identify person
-                var faceidentified = await _faceClient.IdentifyAsync("igniateam", faceid, (float)0.5, 1);
                 // Count the API call. 
                 Properties.Settings.Default.FaceAPICallCount++;
+                //Identify person
+                var faceidentified = await _faceClient.IdentifyAsync("igniateam", faceid, (float)0.5, 1);
+            
                 //Similar Candidates
                 var similarcandidates = faceidentified[0].Candidates.Length;
-                
+
 
                 if (similarcandidates > 0)
                 {
-                    //Candidate Name
-                    var candidate = await _faceClient.GetPersonInPersonGroupAsync("igniateam", faceidentified[0].Candidates[0].PersonId);
-                    names.Add(candidate.Name);
-                    // Count the API call. 
                     Properties.Settings.Default.FaceAPICallCount++;
+                    try
+                    {
+                        //Candidate Name
+                        var candidate = await _faceClient.GetPersonInPersonGroupAsync("igniateam", faceidentified[0].Candidates[0].PersonId);
+                        names.Add(candidate.Name);
+                    }
+                    catch
+                    {
+                        names.Add("Unidentified Person");
+                    }
+                    
                 }
                 else
                 {
@@ -529,30 +538,52 @@ namespace LiveCameraSample
 
         private async void CreatePerson_Click(object sender, RoutedEventArgs e)
         {
-            var personname = PersonName.Text;
-
-            // Create API clients. 
-            _faceClient = new FaceAPI.FaceServiceClient(Properties.Settings.Default.FaceAPIKey, Properties.Settings.Default.FaceAPIHost);
-
-            Microsoft.ProjectOxford.Face.Contract.Person[] facelist = await _faceClient.ListPersonsAsync("igniateam");
-
-            var personid = await _faceClient.CreatePersonAsync("igniateam", personname);
-            String[] imagefilenames = ImageURL.Text.Split(';');
-
-            foreach (var imagefileurl in imagefilenames)
+            try
             {
-                if (imagefileurl != "")
+                CreateUser.Content = "Wait....";
+                CreateUser.IsEnabled = false;
+
+                if (PersonName.Text != "" && ImageURL.Text != "")
                 {
-                    var imagestream = File.OpenRead(imagefileurl);
-                    var faceid = await _faceClient.AddPersonFaceAsync("igniateam", personid.PersonId, imagestream);
+                    var personname = PersonName.Text;
+
+                    // Create API clients. 
+                    _faceClient = new FaceAPI.FaceServiceClient(Properties.Settings.Default.FaceAPIKey, Properties.Settings.Default.FaceAPIHost);
+                    Properties.Settings.Default.FaceAPICallCount++;
+                    Microsoft.ProjectOxford.Face.Contract.Person[] facelist = await _faceClient.ListPersonsAsync("igniateam");
+
+                    var personid = await _faceClient.CreatePersonAsync("igniateam", personname);
+                    String[] imagefilenames = ImageURL.Text.Split(';');
+
+                    foreach (var imagefileurl in imagefilenames)
+                    {
+                        if (imagefileurl != "")
+                        {
+                            var imagestream = File.OpenRead(imagefileurl);
+                            Properties.Settings.Default.FaceAPICallCount++;
+                            var faceid = await _faceClient.AddPersonFaceAsync("igniateam", personid.PersonId, imagestream);
+                        }
+                    }
+
+                    Properties.Settings.Default.FaceAPICallCount++;
+                    await _faceClient.TrainPersonGroupAsync("igniateam");
+                    PersonName.Text = "";
+                    ImageURL.Text = "";
+                    MessageBox.Show("User Added", "Success");
+
+                }
+
+                else
+                {
+                    MessageBox.Show("Please provide User Name and Image Path", "Error");
                 }
             }
-
-
-            await _faceClient.TrainPersonGroupAsync("igniateam");
-            PersonName.Text = "";
-            ImageURL.Text = "";
-            MessageBox.Show("User Added");
+         
+            finally
+            {
+                CreateUser.Content = "Create User";
+                CreateUser.IsEnabled = true;
+            }
         }
 
         private void SelectImage_Click(object sender, RoutedEventArgs e)
@@ -562,7 +593,7 @@ namespace LiveCameraSample
             Microsoft.Win32.OpenFileDialog dlg = new Microsoft.Win32.OpenFileDialog();
             // Set filter for file extension and default file extension 
             dlg.Multiselect = true;
-
+            dlg.Filter = "Image files (*.jpg, *.jpeg, *.jpe, *.jfif, *.png) | *.jpg; *.jpeg; *.jpe; *.jfif; *.png";
             // Display OpenFileDialog by calling ShowDialog method 
             Nullable<bool> result = dlg.ShowDialog();
 
@@ -577,6 +608,53 @@ namespace LiveCameraSample
                 ImageURL.Text = filenames.ToString();
             }
 
+        }
+
+        private void FetchUsers_Click(object sender, RoutedEventArgs e)
+        {
+            PopulateUsers();
+        }
+        private async void PopulateUsers()
+        {
+            fetchUser.IsEnabled = false;
+            fetchUser.Content = "Wait....";
+            if (_faceClient == null)
+            {
+                // Create API clients. 
+                Properties.Settings.Default.FaceAPICallCount++;
+                _faceClient = new FaceAPI.FaceServiceClient(Properties.Settings.Default.FaceAPIKey, Properties.Settings.Default.FaceAPIHost);
+            }
+            comboUsers.Items.Clear();
+            Properties.Settings.Default.FaceAPICallCount++;
+            Microsoft.ProjectOxford.Face.Contract.Person[] facelist = await _faceClient.ListPersonsAsync("igniateam");
+            foreach (Microsoft.ProjectOxford.Face.Contract.Person person in facelist)
+            {
+                comboUsers.Items.Add(person.Name + " # " + person.PersonId);
+            }
+            fetchUser.IsEnabled = true;
+            fetchUser.Content = "Fetch Users";
+        }
+        private async void DeleteUser_Click(object sender, RoutedEventArgs e)
+        {
+            if (comboUsers.SelectedValue != null)
+            {
+                if (_faceClient == null)
+                {
+
+                    // Create API clients. 
+                    _faceClient = new FaceAPI.FaceServiceClient(Properties.Settings.Default.FaceAPIKey, Properties.Settings.Default.FaceAPIHost);
+                }
+                Properties.Settings.Default.FaceAPICallCount++;
+                await _faceClient.DeletePersonAsync("igniateam", new Guid(comboUsers.SelectedValue.ToString().Split('#')[1]));
+
+                PopulateUsers();
+                MessageBox.Show("User Removed", "Success");
+            }
+            else
+            {
+                MessageBox.Show("Please select a user", "Error");
+
+            }
         }
     }
 }
